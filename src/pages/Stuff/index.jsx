@@ -215,6 +215,7 @@ const Stuff = () => {
 
   // handle Create
   const handleClose = () => setShow(false);
+
   const handleShow = () => setShow(true);
 
   const handleChange = (e) => {
@@ -297,6 +298,7 @@ const Stuff = () => {
       });
   };
 
+  // uttils
   const currency = (value) => {
     const result = new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -306,6 +308,7 @@ const Stuff = () => {
 
     return result;
   };
+
   return (
     <Content>
       <nav className="mb-4" aria-label="breadcrumb">
@@ -320,7 +323,7 @@ const Stuff = () => {
       <div className="mb-3">
         <Button variant="primary" onClick={handleShow}>
           <FontAwesomeIcon icon={faPlus} style={{ marginRight: "10px" }} />
-          Tambah Barang
+          Barang
         </Button>
       </div>
 

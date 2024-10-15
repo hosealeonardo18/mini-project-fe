@@ -4,8 +4,7 @@ import DataTable from "react-data-table-component";
 const customStyles = {
   header: {
     style: {
-      backgroundColor: "#268bd2", // blue header
-      color: "white", // white text
+      color: "black", // white text
       borderRadius: "0px", // Remove border-radius
     },
   },
@@ -56,7 +55,7 @@ const conditionalRowStyles = [
   },
 ];
 
-const StuffDataTable = ({ columns, data, progress }) => {
+const StuffDataTable = ({ columns, data, progress, title }) => {
   const [pending, setPending] = useState(true);
   const [search, setSearch] = useState("");
   const [filteredData, setFilteredData] = useState(data);
@@ -78,7 +77,7 @@ const StuffDataTable = ({ columns, data, progress }) => {
     <div className="card p-4">
       <input
         type="text"
-        placeholder="Cari barang"
+        placeholder={`Cari ${title}`}
         className="form-control mb-3 col-lg-3 col-sm-12"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
