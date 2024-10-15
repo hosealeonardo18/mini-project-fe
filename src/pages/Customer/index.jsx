@@ -6,14 +6,26 @@ import { Button } from "react-bootstrap";
 import Datatable from "./DataTable";
 import axios from "axios";
 import ModalCreate from "../../components/Modal/create";
+import ModalUpdate from "../../components/Modal/update";
 import Swal from "sweetalert2";
 
 const Customer = () => {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  const handleShowUpdateModal = () => setShowUpdateModal(true);
+  const handleCloseUpdateModal = () => setShowUpdateModal(false);
 
   const [pelanggans, setPelanggans] = useState([]);
   const [formInput, setFormInput] = useState({
+    nama: "",
+    domisili: "",
+    jenis_kelamin: "",
+  });
+
+  const [pelanggan, setPelanggan] = useState({
+    uid: "",
     nama: "",
     domisili: "",
     jenis_kelamin: "",
@@ -99,6 +111,7 @@ const Customer = () => {
       });
   };
 
+  // delete
   const handleDelete = (uid, name) => {
     Swal.fire({
       title: `Ingin delete "${name}"?`,
@@ -127,7 +140,73 @@ const Customer = () => {
     });
   };
 
-  const handleUpdate = () => {};
+  // update
+  const handleUpdate = (data) => {
+    setPelanggan({
+      uid: data.uid,
+      nama: data.nama,
+      domisili: data.domisili,
+      jenis_kelamin: data.jenis_kelamin,
+    });
+
+    handleShowUpdateModal();
+  };
+
+  const handleChangeUpdate = (e) => {
+    setPelanggan({
+      ...pelanggan,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmitUpdate = (e) => {
+    e.preventDefault();
+
+    const formData = new FormData();
+
+    formData.append("nama", pelanggan.nama);
+    formData.append("domisili", pelanggan.domisili);
+    formData.append("jenis_kelamin", pelanggan.jenis_kelamin);
+    formData.append("_method", "put");
+
+    axios
+      .post(`${url}/${pelanggan.uid}`, formData)
+      .then((res) => {
+        if (!res.data.false) {
+          handleCloseUpdateModal(true);
+
+          Swal.fire({
+            title: "Successfully!",
+            text: `${res.data.message}`,
+            icon: "success",
+            timer: 2000,
+            showConfirmButton: true,
+            willClose: () => {
+              handleFetchData(url, setPelanggan);
+
+              setPelanggan({
+                nama: "",
+                kategori: "",
+                harga: 0,
+              });
+            },
+          });
+        } else {
+          Swal.fire({
+            title: "Failed!",
+            text: res.data.message,
+            icon: "failed",
+          });
+        }
+      })
+      .catch((err) => {
+        Swal.fire({
+          title: "Failed!",
+          text: err.message,
+          icon: "failed",
+        });
+      });
+  };
 
   const columns = [
     {
@@ -261,6 +340,69 @@ const Customer = () => {
           </div>
         </form>
       </ModalCreate>
+
+      <ModalUpdate
+        show={showUpdateModal}
+        handleClose={handleCloseUpdateModal}
+        title="Edit data pelanggan"
+        handleSubmit={handleSubmitUpdate}
+      >
+        <form onSubmit={handleSubmitUpdate}>
+          <div className="mb-3">
+            <div className="form-group">
+              <label for="edit_nama">Nama</label>
+              <input
+                type="text"
+                name="nama"
+                value={pelanggan.nama}
+                className="form-control"
+                onChange={handleChangeUpdate}
+              />
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="form-group">
+              <label for="edit_domisili">Domisili</label>
+              <input
+                type="text"
+                name="domisili"
+                value={pelanggan.domisili}
+                className="form-control"
+                onChange={handleChangeUpdate}
+              />
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <div className="form-group">
+              <label for="edit_domisili">Jenis Kelamin</label>
+              <select
+                name="jenis_kelamin"
+                className="form-control"
+                onChange={handleChangeUpdate}
+                data-placeholder="Pilih jenis kelamin"
+              >
+                <option value="" disabled selected hidden>
+                  Pilih jenis kelamin
+                </option>
+                <option
+                  value="pria"
+                  selected={pelanggan.jenis_kelamin === "pria"}
+                >
+                  Pria
+                </option>
+                <option
+                  value="wanita"
+                  selected={pelanggan.jenis_kelamin === "wanita"}
+                >
+                  Wanita
+                </option>
+              </select>
+            </div>
+          </div>
+        </form>
+      </ModalUpdate>
     </Content>
   );
 };
