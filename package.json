@@ -23,6 +23,7 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
     "react-scripts": "5.0.1",
+    "react-select": "^5.8.1",
     "styled-components": "^6.1.13",
     "sweetalert2": "^11.14.3",
     "web-vitals": "^2.1.4"
