@@ -12,10 +12,12 @@ const Sales = () => {
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+  const [loading, setLoading] = useState(true);
 
   // select Option Customer
   const [selectedOptionCustomer, setSelectedOptionCustomer] = useState(null);
   const [optionCustomers, setOptionCustomers] = useState([]);
+  const [transactions, setTransactions] = useState([]);
 
   // sales item
   const [salesItems, setSalesItems] = useState([
@@ -31,7 +33,7 @@ const Sales = () => {
   // get data product
   const urlProduct = `${process.env.REACT_APP_URL}/api/barang?limit=1000`;
 
-  // post data transaction
+  // get & post data transaction
   const urlTransaction = `${process.env.REACT_APP_URL}/api/penjualan`;
 
   // function get data for select option
@@ -62,7 +64,10 @@ const Sales = () => {
 
     // call products
     getDataFromApi(urlProduct, setOptionProducts);
-  }, [urlCustomer, urlProduct]);
+
+    // call transaction
+    getData(urlTransaction, setTransactions);
+  }, [urlCustomer, urlProduct, urlTransaction]);
 
   const handleInputChange = (index, event, selectType = false) => {
     const newItems = [...salesItems];
@@ -105,49 +110,158 @@ const Sales = () => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 0, // Tidak ada desimal
+      minimumFractionDigits: 0,
     }).format(value);
   };
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
+    const hasValidItems = salesItems.some(
+      (item) => item.barang && item.name && item.qty > 0 && item.harga > 0
+    );
 
-    formData.append("kode_pelanggan", selectedOptionCustomer.value);
+    if (hasValidItems) {
+      const formData = new FormData();
 
-    salesItems.forEach((item, index) => {
-      formData.append(`barang[${index}][kode]`, item.barang);
-      formData.append(`barang[${index}][qty]`, item.qty);
-    });
+      formData.append("kode_pelanggan", selectedOptionCustomer.value);
 
+      salesItems.forEach((item, index) => {
+        formData.append(`barang[${index}][kode]`, item.barang);
+        formData.append(`barang[${index}][qty]`, item.qty);
+      });
+
+      axios
+        .post(urlTransaction, formData)
+        .then((res) => {
+          if (!res.data.false) {
+            Swal.fire({
+              title: "Successfully!",
+              text: `${res.data.message}`,
+              icon: "success",
+              timer: 2000,
+              showConfirmButton: true,
+              willClose: () => {
+                // Reset form fields
+                setSalesItems([{ barang: "", name: "", qty: 0, harga: 0 }]);
+                setOptionProducts([]);
+                setOptionCustomers([]);
+
+                // update table
+                getData(urlTransaction, setTransactions);
+              },
+            });
+          } else {
+            Swal.fire({
+              title: "Failed!",
+              text: res.data.message,
+              icon: "error",
+            });
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+          Swal.fire({
+            title: "Error!",
+            text: "There was an error submitting the form.",
+            icon: "error",
+          });
+        });
+    } else {
+      Swal.fire({
+        title: "Warning!",
+        text: "Please fill out all fields in at least one item before submitting.",
+        icon: "warning",
+      });
+    }
+  };
+
+  // update
+  const handleUpdate = () => {};
+
+  // delete
+  const handleDelete = () => {};
+
+  // get data
+  const getData = (url, state) => {
     axios
-      .post(urlTransaction, formData)
-      .then((res) => {
-        if (!res.data.false) {
-          Swal.fire({
-            title: "Successfully!",
-            text: `${res.data.message}`,
-            icon: "success",
-            timer: 2000,
-            showConfirmButton: true,
-            willClose: () => {
-              setSalesItems([{ barang: "", name: "", qty: 0, harga: 0 }]);
-              setOptionProducts([]);
-              setOptionCustomers([]);
-            },
-          });
-        } else {
-          Swal.fire({
-            title: "Failed!",
-            text: res.data.message,
-            icon: "failed",
-          });
+      .get(url)
+      .then((response) => {
+        if (!response.data.error) {
+          setLoading(false);
+          state(response.data.data);
         }
       })
       .catch((err) => {
-        console.log(err);
+        Swal.fire({
+          title: "Failed!",
+          text: err.message,
+          icon: "failed",
+        });
       });
+  };
+
+  const columns = [
+    {
+      name: "Nota",
+      selector: (row) => row.id_nota,
+      sortable: true,
+    },
+    {
+      name: "Nama Pelanggan",
+      selector: (row) => row.pelanggan.nama,
+      sortable: true,
+    },
+    {
+      name: "Total",
+      cell: (row) => {
+        return currency(row.subtotal);
+      },
+      sortable: true,
+    },
+    {
+      name: "Detail",
+      cell: (row) => {
+        // return row.item_penjualan;
+      },
+      sortable: true,
+    },
+
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="d-flex space-x">
+          <button
+            type="button"
+            className="btn btn-sm btn-icon text-warning"
+            onClick={() => handleUpdate(row)}
+          >
+            <FontAwesomeIcon icon={faEdit} />
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-sm btn-icon text-danger"
+            onClick={() => handleDelete(row.uid, row.nama)}
+          >
+            <FontAwesomeIcon icon={faTrash} />
+          </button>
+        </div>
+      ),
+      ignoreRowClick: true,
+      allowOverflow: true,
+      button: true,
+    },
+  ];
+
+  const currency = (value) => {
+    const result = new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(value);
+
+    return result;
   };
 
   return (
@@ -162,13 +276,14 @@ const Sales = () => {
       </nav>
 
       <form onSubmit={handleSubmitForm}>
-        <div className="mb-3">
-          <button type="submit" className="btn btn-success">
-            Create
-          </button>
-        </div>
-
         <div className="container p-0 m-0" style={{ fontSize: "0.9rem" }}>
+          <div className="row">
+            <div className="col-lg-12">
+              <h5 className="mb-3" style={{ fontWeight: 700, color: "black" }}>
+                Tambah Penjualan
+              </h5>
+            </div>
+          </div>
           <div className="row">
             <div className="col-lg-8 mb-3">
               <div className="card p-4">
@@ -210,6 +325,7 @@ const Sales = () => {
                           type="number"
                           name="qty"
                           value={item.qty}
+                          style={{ height: "38px" }}
                           className="form-control"
                           onChange={(e) => handleInputChange(index, e)}
                         />
@@ -221,6 +337,7 @@ const Sales = () => {
                           name="harga"
                           value={item.harga}
                           className="form-control"
+                          style={{ height: "38px" }}
                           onChange={(e) => handleInputChange(index, e)}
                           disabled
                         />
@@ -229,6 +346,7 @@ const Sales = () => {
                         <button
                           type="button"
                           className="btn btn-danger"
+                          style={{ fontSize: "0.85rem" }}
                           onClick={() => removeRow(index)}
                         >
                           Hapus
@@ -239,6 +357,7 @@ const Sales = () => {
 
                   <button
                     type="button"
+                    style={{ fontSize: "0.85rem" }}
                     className="btn btn-primary"
                     onClick={addRow}
                   >
@@ -282,14 +401,33 @@ const Sales = () => {
                   </h5>
                 </div>
               </div>
+
+              <div className="mt-3">
+                <button
+                  type="submit"
+                  className="btn btn-success"
+                  style={{ width: "100%" }}
+                >
+                  Simpan
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </form>
+      <hr />
 
-      <div className="mb-5 mt-3">
-        <h5 style={{ fontWeight: 700, color: "black" }}>List Penjualan</h5>
-        <DataTables />
+      <div className="mb-5 mt-4">
+        <h5 className="mb-3" style={{ fontWeight: 700, color: "black" }}>
+          List Penjualan
+        </h5>
+
+        <DataTables
+          columns={columns}
+          data={transactions}
+          title={`penjualan`}
+          progress={loading}
+        />
       </div>
     </Content>
   );

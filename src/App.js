@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import Router from "./router";
 import $ from "jquery";
 import "./assets/css/sb-admin-2.css";
+import "./App.css";
 
 function App() {
   useEffect(() => {
