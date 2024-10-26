@@ -42,13 +42,13 @@ const ExpandedComponent = ({ data }) => (
         {data.item_penjualan.map((item, index) => (
           <tr key={index}>
             <td style={{ borderBottom: "1px solid #ddd", padding: "8px" }}>
-              {item.barang.nama}
+              {item.barang?.nama || ""}
             </td>
             <td style={{ borderBottom: "1px solid #ddd", padding: "8px" }}>
-              {item.qty}
+              {item.qty || 0} {/* Menampilkan qty jika ada */}
             </td>
             <td style={{ borderBottom: "1px solid #ddd", padding: "8px" }}>
-              {item.barang.harga}
+              {item.barang?.harga || 0} {/* Pengecekan nilai harga */}
             </td>
           </tr>
         ))}
@@ -80,19 +80,22 @@ const DataTables = ({ columns, data, progress, title }) => {
   const customStyles = {
     header: {
       style: {
-        color: "black", // white text
-        borderRadius: "0px", // Remove border-radius
+        color: "black",
+        borderRadius: "0px",
+        allowOverflow: true,
       },
     },
     rows: {
       style: {
-        minHeight: "45px", // optional, adjust row height
+        minHeight: "45px",
+        allowOverflow: true,
       },
     },
 
     headCells: {
       style: {
         textTransform: "uppercase",
+        allowOverflow: true,
       },
     },
   };
