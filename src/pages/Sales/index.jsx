@@ -180,7 +180,33 @@ const Sales = () => {
   const handleUpdate = () => {};
 
   // delete
-  const handleDelete = () => {};
+  const handleDelete = (uid, name) => {
+    Swal.fire({
+      title: `Ingin delete "${name}"?`,
+      text: "Kamu tidak dapat mengembalikan data ini kembali!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios.delete(`${urlTransaction}/${uid}`).then((res) => {
+          if (!res.data.error) {
+            Swal.fire({
+              title: "Deleted!",
+              text: res.data.message,
+              icon: "success",
+              timer: 2000,
+              willClose: () => {
+                getData(urlTransaction, setTransactions);
+              },
+            });
+          }
+        });
+      }
+    });
+  };
 
   // get data
   const getData = (url, state) => {
@@ -219,13 +245,6 @@ const Sales = () => {
       },
       sortable: true,
     },
-    {
-      name: "Detail",
-      cell: (row) => {
-        // return row.item_penjualan;
-      },
-      sortable: true,
-    },
 
     {
       name: "Action",
@@ -242,7 +261,7 @@ const Sales = () => {
           <button
             type="button"
             className="btn btn-sm btn-icon text-danger"
-            onClick={() => handleDelete(row.uid, row.nama)}
+            onClick={() => handleDelete(row.id_nota, row.id_nota)}
           >
             <FontAwesomeIcon icon={faTrash} />
           </button>
@@ -406,7 +425,7 @@ const Sales = () => {
                 <button
                   type="submit"
                   className="btn btn-success"
-                  style={{ width: "100%" }}
+                  style={{ width: "100%", fontSize: "0.85rem" }}
                 >
                   Simpan
                 </button>
